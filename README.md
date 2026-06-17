@@ -7,3 +7,5 @@
 - Lets staff teleport around between both suspicious players and all players in general.
 
 - Easy to use with most of the interactions as buttons in chat.
+
+Now with new workflow!
