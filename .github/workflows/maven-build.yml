@@ -1,25 +1,37 @@
 name: Release
 
-# Run workflow on commits to the `master` branch
+# Run workflow on commits to the default branch
 on:
   push:
 
+permissions:
+  contents: write
+
 jobs:
   release:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install Java and Maven
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: 21
+          cache: maven
 
-      - name: Release Maven package
-        uses: samuelmeuli/action-maven-publish@v1
+      - name: Build with Maven
+        run: mvn --batch-mode --no-transfer-progress package
+
+      - name: Read project version
+        id: version
+        run: echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
         with:
-          gpg_private_key: ${{ secrets.gpg_private_key }}
-          gpg_passphrase: ${{ secrets.gpg_passphrase }}
-          nexus_username: ${{ secrets.nexus_username }}
-          nexus_password: ${{ secrets.nexus_password }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: SuspiciousPlayers v${{ steps.version.outputs.version }}
+          files: target/SuspiciousPlayers-${{ steps.version.outputs.version }}.jar
+          fail_on_unmatched_files: true
